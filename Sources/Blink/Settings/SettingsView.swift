@@ -6,7 +6,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section {
+            Section("Timing") {
                 Stepper(value: $store.settings.intervalMinutes, in: 1...180) {
                     LabeledContent("Break every", value: "\(store.settings.intervalMinutes) min")
                 }
@@ -15,7 +15,7 @@ struct SettingsView: View {
                 }
             }
 
-            Section {
+            Section("Appearance") {
                 Picker("Style", selection: $store.settings.style) {
                     Text("Overlay").tag(BreakStyle.overlay)
                     Text("Pill").tag(BreakStyle.pill)
@@ -26,7 +26,7 @@ struct SettingsView: View {
 
             Section("Pause the timer when") {
                 Toggle("The screen is locked", isOn: $store.settings.pauseWhenLocked)
-                Toggle("You have been idle for a full break", isOn: $store.settings.idleCountsAsBreak)
+                Toggle("You have been idle longer than a break", isOn: $store.settings.idleCountsAsBreak)
             }
 
             Section("Show a pill instead of the overlay when") {
