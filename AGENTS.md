@@ -28,9 +28,3 @@ Plain `swift test` fails: the Command Line Tools do not expose Testing.framework
 
 Sound, pre-warning before a break, strict mode without a skip, long breaks, statistics, global hotkeys, Focus integration, per-app screen-share detection, active hours, auto-update, localization, notarization. Do not add these unasked.
 
-## Unverified
-
-- Capture exclusion during a real Teams or Slack share.
-- Camera and microphone detection during an actual call.
-- Overlay above a fullscreen Space.
-- `SMAppService` registration once installed in /Applications.
