@@ -20,7 +20,7 @@ Plain `swift test` fails: the Command Line Tools do not expose Testing.framework
 ## Constraints
 
 - Swift 6 strict concurrency, minimum macOS 15, SwiftPM only. No Xcode project, no packages.
-- No permission prompts, ever. Camera and microphone use is read through "running somewhere" device properties. Anything needing TCC or Accessibility is out of scope.
+- One permission, opt-in: pausing Chrome video during an overlay needs Accessibility, and asks only when the grant is missing. Nothing else may require TCC or Accessibility, and camera and microphone use is still read through "running somewhere" device properties rather than a prompt.
 - Not sandboxed, not notarized, ad-hoc signed.
 - Break windows must keep `sharingType = .none` so they never appear in a screen share.
 

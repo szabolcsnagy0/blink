@@ -6,12 +6,11 @@ A macOS menu bar app that reminds you to look away from the screen. Every 20 min
 
 - The break shows as a dimmed full screen overlay, or as a small pill under the menu bar. Both are excluded from screen capture, so meeting participants never see them.
 - Any break can be skipped with a click or Esc.
-- The timer pauses while the screen is locked or the display sleeps, and resumes where it left off.
-- Being idle longer than a break counts as a break taken.
-- While the camera or microphone is in use, or the frontmost app is fullscreen, the break shows as a pill instead of an overlay.
+- Configure each event—screen lock, a camera or microphone in use, or a fullscreen app—to leave breaks unchanged, pause the timer, show a pill, or show an overlay.
+- When enabled, Blink requests Accessibility permission and makes a best-effort attempt to pause and resume a fullscreen Google Chrome video around an overlay.
 - Manual pause for 30 minutes, an hour, or until tomorrow.
 
-Every rule has a toggle in Settings. Nothing leaves the machine, and no permissions are requested.
+Every rule is configured in Settings. Nothing leaves the machine.
 
 ## Build
 
