@@ -10,7 +10,9 @@ final class AppController: NSObject, NSApplicationDelegate {
     private let pill = PillWindowController()
     private let settingsWindow = SettingsWindowController()
     private let lockMonitor = LockMonitor()
+    private let chromeVideo = ChromeVideoController()
     private var timer: Timer?
+    private var isFullscreen = false
 
     override init() {
         scheduler = Scheduler(settings: store.settings)
@@ -35,8 +37,9 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     private func tick() {
+        isFullscreen = needsFullscreen && FullscreenMonitor.isActive
         scheduler.handle(.suppression(signals()))
-        scheduler.handle(.tick(now: .now, idleSeconds: IdleMonitor.seconds))
+        scheduler.handle(.tick(now: .now))
         render()
     }
 
@@ -45,9 +48,14 @@ final class AppController: NSObject, NSApplicationDelegate {
         let settings = scheduler.settings
         var signals: Set<Suppression> = []
         if lockMonitor.isLocked { signals.insert(.locked) }
-        if settings.pillDuringCalls, CallMonitor.isActive { signals.insert(.inCall) }
-        if settings.pillDuringFullscreen, FullscreenMonitor.isActive { signals.insert(.fullscreen) }
+        if settings.response(for: .inCall) != .noChange, CallMonitor.isActive { signals.insert(.inCall) }
+        if settings.response(for: .fullscreen) != .noChange, isFullscreen { signals.insert(.fullscreen) }
         return signals
+    }
+
+    private var needsFullscreen: Bool {
+        let settings = scheduler.settings
+        return settings.response(for: .fullscreen) != .noChange || settings.pauseChromeVideoDuringOverlay
     }
 
     private func perform(_ command: StatusItemController.Command) {
@@ -57,7 +65,6 @@ final class AppController: NSObject, NSApplicationDelegate {
         case let .pause(duration): scheduler.handle(.pause(until: duration.deadline))
         case .resume: scheduler.handle(.resume)
         case .settings: settingsWindow.show(store: store)
-        case .toggleLoginItem: LoginItem.isEnabled.toggle()
         case .quit: NSApp.terminate(nil)
         }
         render()
@@ -68,11 +75,14 @@ final class AppController: NSObject, NSApplicationDelegate {
         case .none:
             overlay.hide()
             pill.hide()
+            chromeVideo.resumeIfNeeded()
         case let .overlay(remaining):
             pill.hide()
+            if scheduler.settings.pauseChromeVideoDuringOverlay { chromeVideo.pauseIfPlaying(isFullscreen: isFullscreen) }
             overlay.show(remaining: remaining, total: scheduler.settings.breakSeconds)
         case let .pill(remaining):
             overlay.hide()
+            chromeVideo.resumeIfNeeded()
             pill.show(remaining: remaining, total: scheduler.settings.breakSeconds)
         }
         statusItem.update(indicator: scheduler.indicator, countdown: countdown, summary: summary)
@@ -88,7 +98,7 @@ final class AppController: NSObject, NSApplicationDelegate {
         case .running: "Next break in \(scheduler.remaining.clock)"
         case .onBreak: "On a break"
         case let .paused(_, until): "Paused until \(until.formatted(date: .omitted, time: .shortened))"
-        case .suspended: "Paused, screen is locked"
+        case .suspended: "Paused by an active event"
         }
     }
 }

@@ -9,38 +9,38 @@ public struct Settings: Sendable, Equatable {
     public var breakSeconds: Int
     public var style: BreakStyle
     public var showCountdown: Bool
-    public var pauseWhenLocked: Bool
-    public var idleCountsAsBreak: Bool
-    public var pillDuringCalls: Bool
-    public var pillDuringFullscreen: Bool
+    public var lockedResponse: EventResponse
+    public var inCallResponse: EventResponse
+    public var fullscreenResponse: EventResponse
+    public var pauseChromeVideoDuringOverlay: Bool
 
     public init(
         intervalMinutes: Int = 20,
         breakSeconds: Int = 20,
         style: BreakStyle = .overlay,
         showCountdown: Bool = false,
-        pauseWhenLocked: Bool = true,
-        idleCountsAsBreak: Bool = true,
-        pillDuringCalls: Bool = true,
-        pillDuringFullscreen: Bool = true
+        lockedResponse: EventResponse = .pause,
+        inCallResponse: EventResponse = .pill,
+        fullscreenResponse: EventResponse = .pill,
+        pauseChromeVideoDuringOverlay: Bool = false
     ) {
         self.intervalMinutes = intervalMinutes
         self.breakSeconds = breakSeconds
         self.style = style
         self.showCountdown = showCountdown
-        self.pauseWhenLocked = pauseWhenLocked
-        self.idleCountsAsBreak = idleCountsAsBreak
-        self.pillDuringCalls = pillDuringCalls
-        self.pillDuringFullscreen = pillDuringFullscreen
+        self.lockedResponse = lockedResponse
+        self.inCallResponse = inCallResponse
+        self.fullscreenResponse = fullscreenResponse
+        self.pauseChromeVideoDuringOverlay = pauseChromeVideoDuringOverlay
     }
 
     public var intervalSeconds: Int { intervalMinutes * 60 }
 
-    public func honours(_ suppression: Suppression) -> Bool {
+    public func response(for suppression: Suppression) -> EventResponse {
         switch suppression {
-        case .locked: pauseWhenLocked
-        case .inCall: pillDuringCalls
-        case .fullscreen: pillDuringFullscreen
+        case .locked: lockedResponse
+        case .inCall: inCallResponse
+        case .fullscreen: fullscreenResponse
         }
     }
 }
@@ -51,10 +51,10 @@ extension Settings {
         static let breakSeconds = "breakSeconds"
         static let style = "style"
         static let showCountdown = "showCountdown"
-        static let pauseWhenLocked = "pauseWhenLocked"
-        static let idleCountsAsBreak = "idleCountsAsBreak"
-        static let pillDuringCalls = "pillDuringCalls"
-        static let pillDuringFullscreen = "pillDuringFullscreen"
+        static let lockedResponse = "lockedResponse"
+        static let inCallResponse = "inCallResponse"
+        static let fullscreenResponse = "fullscreenResponse"
+        static let pauseChromeVideoDuringOverlay = "pauseChromeVideoDuringOverlay"
     }
 
     public static func load(from defaults: UserDefaults) -> Settings {
@@ -63,10 +63,24 @@ extension Settings {
         if let seconds = defaults.object(forKey: Key.breakSeconds) as? Int { settings.breakSeconds = seconds }
         if let raw = defaults.string(forKey: Key.style), let style = BreakStyle(rawValue: raw) { settings.style = style }
         if let value = defaults.object(forKey: Key.showCountdown) as? Bool { settings.showCountdown = value }
-        if let value = defaults.object(forKey: Key.pauseWhenLocked) as? Bool { settings.pauseWhenLocked = value }
-        if let value = defaults.object(forKey: Key.idleCountsAsBreak) as? Bool { settings.idleCountsAsBreak = value }
-        if let value = defaults.object(forKey: Key.pillDuringCalls) as? Bool { settings.pillDuringCalls = value }
-        if let value = defaults.object(forKey: Key.pillDuringFullscreen) as? Bool { settings.pillDuringFullscreen = value }
+        if let raw = defaults.string(forKey: Key.lockedResponse), let response = EventResponse(rawValue: raw) {
+            settings.lockedResponse = response
+        } else if let value = defaults.object(forKey: "pauseWhenLocked") as? Bool {
+            settings.lockedResponse = value ? .pause : .noChange
+        }
+        if let raw = defaults.string(forKey: Key.inCallResponse), let response = EventResponse(rawValue: raw) {
+            settings.inCallResponse = response
+        } else if let value = defaults.object(forKey: "pillDuringCalls") as? Bool {
+            settings.inCallResponse = value ? .pill : .noChange
+        }
+        if let raw = defaults.string(forKey: Key.fullscreenResponse), let response = EventResponse(rawValue: raw) {
+            settings.fullscreenResponse = response
+        } else if let value = defaults.object(forKey: "pillDuringFullscreen") as? Bool {
+            settings.fullscreenResponse = value ? .pill : .noChange
+        }
+        if let value = defaults.object(forKey: Key.pauseChromeVideoDuringOverlay) as? Bool {
+            settings.pauseChromeVideoDuringOverlay = value
+        }
         return settings
     }
 
@@ -75,9 +89,9 @@ extension Settings {
         defaults.set(breakSeconds, forKey: Key.breakSeconds)
         defaults.set(style.rawValue, forKey: Key.style)
         defaults.set(showCountdown, forKey: Key.showCountdown)
-        defaults.set(pauseWhenLocked, forKey: Key.pauseWhenLocked)
-        defaults.set(idleCountsAsBreak, forKey: Key.idleCountsAsBreak)
-        defaults.set(pillDuringCalls, forKey: Key.pillDuringCalls)
-        defaults.set(pillDuringFullscreen, forKey: Key.pillDuringFullscreen)
+        defaults.set(lockedResponse.rawValue, forKey: Key.lockedResponse)
+        defaults.set(inCallResponse.rawValue, forKey: Key.inCallResponse)
+        defaults.set(fullscreenResponse.rawValue, forKey: Key.fullscreenResponse)
+        defaults.set(pauseChromeVideoDuringOverlay, forKey: Key.pauseChromeVideoDuringOverlay)
     }
 }

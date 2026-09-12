@@ -7,11 +7,15 @@ public struct Scheduler: Sendable, Equatable {
         case running(remaining: Int)
         case onBreak(remaining: Int)
         case paused(remaining: Int, until: Date)
-        case suspended(remaining: Int)
+        case suspended(phase: Phase, remaining: Int)
+    }
+
+    public enum Phase: Sendable, Equatable {
+        case running, onBreak
     }
 
     public enum Event: Sendable {
-        case tick(now: Date, idleSeconds: Int)
+        case tick(now: Date)
         case suppression(Set<Suppression>)
         case takeBreakNow
         case skip
@@ -29,15 +33,15 @@ public struct Scheduler: Sendable, Equatable {
         self.state = .running(remaining: settings.intervalSeconds)
     }
 
-    private var active: Set<Suppression> { signals.filter(settings.honours) }
+    private var responses: Set<EventResponse> { Set(signals.map(settings.response)) }
 
     public mutating func handle(_ event: Event) {
         switch event {
-        case let .tick(now, idleSeconds):
-            tick(now: now, idleSeconds: idleSeconds)
+        case let .tick(now):
+            tick(now: now)
         case let .suppression(signals):
             self.signals = signals
-            reconcileLock()
+            reconcileSuppression()
         case .takeBreakNow:
             state = .onBreak(remaining: settings.breakSeconds)
         case .skip:
@@ -49,16 +53,14 @@ public struct Scheduler: Sendable, Equatable {
         case let .settings(settings):
             self.settings = settings
             clampToSettings()
-            reconcileLock()
+            reconcileSuppression()
         }
     }
 
-    private mutating func tick(now: Date, idleSeconds: Int) {
+    private mutating func tick(now: Date) {
         switch state {
         case let .running(remaining):
-            if settings.idleCountsAsBreak, idleSeconds >= settings.breakSeconds {
-                state = .running(remaining: settings.intervalSeconds)
-            } else if remaining <= 1 {
+            if remaining <= 1 {
                 state = .onBreak(remaining: settings.breakSeconds)
             } else {
                 state = .running(remaining: remaining - 1)
@@ -72,12 +74,12 @@ public struct Scheduler: Sendable, Equatable {
         }
     }
 
-    /// A lock arriving mid-break counts as the break taken.
-    private mutating func reconcileLock() {
-        switch (active.contains(.locked), state) {
-        case let (true, .running(remaining)): state = .suspended(remaining: remaining)
-        case (true, .onBreak): state = .suspended(remaining: settings.intervalSeconds)
-        case let (false, .suspended(remaining)): state = .running(remaining: remaining)
+    private mutating func reconcileSuppression() {
+        switch (responses.contains(.pause), state) {
+        case let (true, .running(remaining)): state = .suspended(phase: .running, remaining: remaining)
+        case let (true, .onBreak(remaining)): state = .suspended(phase: .onBreak, remaining: remaining)
+        case let (false, .suspended(phase, remaining)):
+            state = phase == .running ? .running(remaining: remaining) : .onBreak(remaining: remaining)
         default: break
         }
     }
@@ -90,8 +92,8 @@ public struct Scheduler: Sendable, Equatable {
             state = .onBreak(remaining: min(remaining, settings.breakSeconds))
         case let .paused(remaining, until):
             state = .paused(remaining: min(remaining, settings.intervalSeconds), until: until)
-        case let .suspended(remaining):
-            state = .suspended(remaining: min(remaining, settings.intervalSeconds))
+        case let .suspended(phase, remaining):
+            state = .suspended(phase: phase, remaining: min(remaining, settings.intervalSeconds))
         }
     }
 
@@ -99,22 +101,23 @@ public struct Scheduler: Sendable, Equatable {
     public var remaining: Int {
         switch state {
         case let .running(remaining), let .onBreak(remaining),
-             let .paused(remaining, _), let .suspended(remaining): remaining
+             let .paused(remaining, _), let .suspended(_, remaining): remaining
         }
     }
 
+    /// When events disagree the least disruptive presentation wins, so a pill beats an overlay.
     public var presentation: Presentation {
         guard case let .onBreak(remaining) = state else { return .none }
-        return quiet || settings.style == .pill ? .pill(remaining: remaining) : .overlay(remaining: remaining)
+        if responses.contains(.pill) { return .pill(remaining: remaining) }
+        if responses.contains(.overlay) { return .overlay(remaining: remaining) }
+        return settings.style == .pill ? .pill(remaining: remaining) : .overlay(remaining: remaining)
     }
 
     public var indicator: Indicator {
         switch state {
         case .onBreak: .onBreak
         case .paused, .suspended: .paused
-        case .running: quiet ? .quiet : .running
+        case .running: responses.isEmpty || responses == [.noChange] ? .running : .quiet
         }
     }
-
-    private var quiet: Bool { !active.isDisjoint(with: [.inCall, .fullscreen]) }
 }

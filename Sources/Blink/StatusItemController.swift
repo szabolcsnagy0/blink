@@ -4,7 +4,7 @@ import BlinkCore
 @MainActor
 final class StatusItemController: NSObject, NSMenuDelegate {
     enum Command {
-        case takeBreak, skip, pause(Pause), resume, settings, toggleLoginItem, quit
+        case takeBreak, skip, pause(Pause), resume, settings, quit
     }
 
     enum Pause: String, CaseIterable {
@@ -24,12 +24,13 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     var onCommand: (Command) -> Void = { _ in }
 
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    private let menu = NSMenu()
+    private let summaryItem = NSMenuItem()
     private var indicator: Indicator?
     private var summary = ""
 
     override init() {
         super.init()
-        let menu = NSMenu()
         menu.autoenablesItems = false
         menu.delegate = self
         item.menu = menu
@@ -39,6 +40,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     func update(indicator: Indicator, countdown: String?, summary: String) {
         self.summary = summary
+        summaryItem.title = summary
         if indicator != self.indicator {
             self.indicator = indicator
             item.button?.image = NSImage(systemSymbolName: indicator.symbol, accessibilityDescription: "Blink")
@@ -48,9 +50,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
-        let title = NSMenuItem(title: summary, action: nil, keyEquivalent: "")
-        title.isEnabled = false
-        menu.addItem(title)
+        summaryItem.isEnabled = false
+        menu.addItem(summaryItem)
         menu.addItem(.separator())
         menu.addItem(ActionItem("Take Break Now") { [weak self] in self?.onCommand(.takeBreak) })
         menu.addItem(ActionItem("Skip Next Break") { [weak self] in self?.onCommand(.skip) })
@@ -68,11 +69,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         pauseItem.submenu = pause
         menu.addItem(pauseItem)
 
-        menu.addItem(.separator())
         menu.addItem(ActionItem("Settings…", key: ",") { [weak self] in self?.onCommand(.settings) })
-        let login = ActionItem("Launch at Login") { [weak self] in self?.onCommand(.toggleLoginItem) }
-        login.state = LoginItem.isEnabled ? .on : .off
-        menu.addItem(login)
         menu.addItem(.separator())
         menu.addItem(ActionItem("Quit Blink", key: "q") { [weak self] in self?.onCommand(.quit) })
     }
