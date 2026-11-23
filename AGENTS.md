@@ -4,8 +4,9 @@ macOS menu bar break reminder. Personal project, single user, no dependencies.
 
 ## Commands
 
-    make app      # build/Blink.app, ad-hoc signed
-    make install  # copy to /Applications
+    make app      # build/Blink.app, signed with the local identity, else ad-hoc
+    make install  # quit Blink, copy to /Applications, relaunch
+    make cert     # one-time: create and trust the local signing identity
     make test     # scheduler tests
     make icon     # regenerate Resources/AppIcon.icns
 
@@ -21,7 +22,7 @@ Plain `swift test` fails: the Command Line Tools do not expose Testing.framework
 
 - Swift 6 strict concurrency, minimum macOS 15, SwiftPM only. No Xcode project, no packages.
 - One permission, opt-in: pausing Chrome video during an overlay needs Accessibility, and asks only when the grant is missing. Nothing else may require TCC or Accessibility, and camera and microphone use is still read through "running somewhere" device properties rather than a prompt.
-- Not sandboxed, not notarized, ad-hoc signed.
+- Not sandboxed, not notarized. Signed with the self-signed "Blink Local Signing" identity from `make cert` so the Accessibility grant survives rebuilds; ad-hoc without it, which loses the grant on every install.
 - Break windows must keep `sharingType = .none` so they never appear in a screen share.
 
 ## Deliberately not built

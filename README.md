@@ -23,7 +23,7 @@ make test     # scheduler unit tests
 make icon     # regenerate the app icon
 ```
 
-The app is ad-hoc signed and not notarized: on first launch, open it from Finder with right click > Open.
+The app is not notarized: on first launch, open it from Finder with right click > Open. Run `make cert` once before installing: it creates a self-signed signing identity, so the Accessibility grant for pausing Chrome video survives rebuilds. Without it the build is ad-hoc signed and needs the grant again after every install.
 
 ## Layout
 
