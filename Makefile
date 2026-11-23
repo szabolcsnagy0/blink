@@ -2,7 +2,9 @@ BIN := .build/release/Blink
 APP := build/Blink.app
 FRAMEWORKS := /Library/Developer/CommandLineTools/Library/Developer/Frameworks
 TESTLIBS := /Library/Developer/CommandLineTools/Library/Developer/usr/lib
+PLUGINS := /Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing
 TESTFLAGS := -Xswiftc -F -Xswiftc $(FRAMEWORKS) \
+             -Xswiftc -plugin-path -Xswiftc $(PLUGINS) \
              -Xlinker -F -Xlinker $(FRAMEWORKS) \
              -Xlinker -rpath -Xlinker $(FRAMEWORKS) \
              -Xlinker -rpath -Xlinker $(TESTLIBS)
