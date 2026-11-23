@@ -7,7 +7,7 @@ A macOS menu bar app that reminds you to look away from the screen. Every 20 min
 - The break shows as a dimmed full screen overlay, or as a small pill under the menu bar. Both are excluded from screen capture, so meeting participants never see them.
 - Any break can be skipped with a click or Esc.
 - Configure each event—screen lock, a camera or microphone in use, or a fullscreen app—to leave breaks unchanged, pause the timer, show a pill, or show an overlay.
-- When enabled, Blink requests Accessibility permission and makes a best-effort attempt to pause and resume a fullscreen Google Chrome video around an overlay.
+- When enabled, Blink pauses a playing fullscreen Google Chrome video during an overlay and resumes it afterwards; a video that was already paused is left alone. It asks for permission to control Chrome, and needs View > Developer > Allow JavaScript from Apple Events turned on in Chrome.
 - Manual pause for 30 minutes, an hour, or until tomorrow.
 
 Every rule is configured in Settings. Nothing leaves the machine.
@@ -23,7 +23,7 @@ make test     # scheduler unit tests
 make icon     # regenerate the app icon
 ```
 
-The app is not notarized: on first launch, open it from Finder with right click > Open. Run `make cert` once before installing: it creates a self-signed signing identity, so the Accessibility grant for pausing Chrome video survives rebuilds. Without it the build is ad-hoc signed and needs the grant again after every install.
+The app is not notarized: on first launch, open it from Finder with right click > Open. Run `make cert` once before installing: it creates a self-signed signing identity, so the permission to control Chrome survives rebuilds. Without it the build is ad-hoc signed and needs the grant again after every install.
 
 ## Layout
 

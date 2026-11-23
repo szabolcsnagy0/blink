@@ -1,6 +1,6 @@
 #!/bin/sh
 # One-time setup: a self-signed code-signing identity in the login keychain. Ad-hoc builds are
-# pinned by hash, so every rebuild loses the Accessibility grant; builds signed with this
+# pinned by hash, so every rebuild loses the Automation grant; builds signed with this
 # identity share one designated requirement and keep it.
 set -eu
 

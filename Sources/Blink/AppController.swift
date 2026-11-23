@@ -12,7 +12,6 @@ final class AppController: NSObject, NSApplicationDelegate {
     private let lockMonitor = LockMonitor()
     private let chromeVideo = ChromeVideoController()
     private var timer: Timer?
-    private var isFullscreen = false
 
     override init() {
         scheduler = Scheduler(settings: store.settings)
@@ -37,7 +36,6 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     private func tick() {
-        isFullscreen = needsFullscreen && FullscreenMonitor.isActive
         scheduler.handle(.suppression(signals()))
         scheduler.handle(.tick(now: .now))
         render()
@@ -49,13 +47,8 @@ final class AppController: NSObject, NSApplicationDelegate {
         var signals: Set<Suppression> = []
         if lockMonitor.isLocked { signals.insert(.locked) }
         if settings.response(for: .inCall) != .noChange, CallMonitor.isActive { signals.insert(.inCall) }
-        if settings.response(for: .fullscreen) != .noChange, isFullscreen { signals.insert(.fullscreen) }
+        if settings.response(for: .fullscreen) != .noChange, FullscreenMonitor.isActive { signals.insert(.fullscreen) }
         return signals
-    }
-
-    private var needsFullscreen: Bool {
-        let settings = scheduler.settings
-        return settings.response(for: .fullscreen) != .noChange || settings.pauseChromeVideoDuringOverlay
     }
 
     private func perform(_ command: StatusItemController.Command) {
@@ -71,18 +64,18 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     private func render() {
-        switch scheduler.presentation {
+        let presentation = scheduler.presentation
+        let overlayUp = if case .overlay = presentation { true } else { false }
+        chromeVideo.render(overlay: overlayUp, enabled: scheduler.settings.pauseChromeVideoDuringOverlay)
+        switch presentation {
         case .none:
             overlay.hide()
             pill.hide()
-            chromeVideo.resumeIfNeeded()
         case let .overlay(remaining):
             pill.hide()
-            if scheduler.settings.pauseChromeVideoDuringOverlay { chromeVideo.pauseIfPlaying(isFullscreen: isFullscreen) }
             overlay.show(remaining: remaining, total: scheduler.settings.breakSeconds)
         case let .pill(remaining):
             overlay.hide()
-            chromeVideo.resumeIfNeeded()
             pill.show(remaining: remaining, total: scheduler.settings.breakSeconds)
         }
         statusItem.update(indicator: scheduler.indicator, countdown: countdown, summary: summary)

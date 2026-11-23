@@ -21,8 +21,8 @@ Plain `swift test` fails: the Command Line Tools do not expose Testing.framework
 ## Constraints
 
 - Swift 6 strict concurrency, minimum macOS 15, SwiftPM only. No Xcode project, no packages.
-- One permission, opt-in: pausing Chrome video during an overlay needs Accessibility, and asks only when the grant is missing. Nothing else may require TCC or Accessibility, and camera and microphone use is still read through "running somewhere" device properties rather than a prompt.
-- Not sandboxed, not notarized. Signed with the self-signed "Blink Local Signing" identity from `make cert` so the Accessibility grant survives rebuilds; ad-hoc without it, which loses the grant on every install.
+- One permission, opt-in: pausing Chrome video during an overlay needs Automation of Chrome (plus Chrome's "Allow JavaScript from Apple Events"), and asks only when the option is turned on. It runs a script in the page that pauses only playing fullscreen video and resumes only what it paused; never go back to the play/pause key, which toggles and so starts paused video. Nothing else may require TCC, Automation or Accessibility, and camera and microphone use is still read through "running somewhere" device properties rather than a prompt.
+- Not sandboxed, not notarized. Signed with the self-signed "Blink Local Signing" identity from `make cert` so the Automation grant survives rebuilds; ad-hoc without it, which loses the grant on every install.
 - Break windows must keep `sharingType = .none` so they never appear in a screen share.
 
 ## Deliberately not built

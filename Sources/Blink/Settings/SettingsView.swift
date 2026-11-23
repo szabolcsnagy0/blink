@@ -56,8 +56,11 @@ struct SettingsView: View {
             Section("Chrome") {
                 Toggle("Pause fullscreen video during overlays", isOn: $store.settings.pauseChromeVideoDuringOverlay)
                     .onChange(of: store.settings.pauseChromeVideoDuringOverlay) { _, enabled in
-                        if enabled { Accessibility.requestPermission() }
+                        if enabled { ChromeVideoController.requestPermission() }
                     }
+                Text("In Chrome, turn on View > Developer > Allow JavaScript from Apple Events.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section {

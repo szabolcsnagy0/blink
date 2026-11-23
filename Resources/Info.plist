@@ -22,6 +22,8 @@
 	<string>15.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Blink pauses fullscreen Chrome video during a break and resumes it afterwards.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 </dict>

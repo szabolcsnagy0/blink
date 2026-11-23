@@ -1,7 +1,7 @@
 BIN := .build/release/Blink
 APP := build/Blink.app
 IDENTITY := Blink Local Signing
-# The local identity from `make cert` when present, so the Accessibility grant survives rebuilds.
+# The local identity from `make cert` when present, so the Automation grant survives rebuilds.
 SIGN := $(shell security find-identity -v -p codesigning 2>/dev/null | grep -q '"$(IDENTITY)"' && echo '$(IDENTITY)' || echo -)
 FRAMEWORKS := /Library/Developer/CommandLineTools/Library/Developer/Frameworks
 TESTLIBS := /Library/Developer/CommandLineTools/Library/Developer/usr/lib
